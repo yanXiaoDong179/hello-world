@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>钓鱼游戏</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        label,
+        input,
+        select,
+        button {
+            margin: 10px 0;
+            display: block;
+        }
+
+        table {
+            width: 960px;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        #result {
+            margin-top: 20px;
+        }
+
+        #simulationResult {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>钓鱼游戏</h1>
+
+        <label for="level">选择钓鱼等级:</label>
+        <select id="level">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+        </select>
+
+        <label for="area">选择区域:</label>
+        <select id="area">
+            <option value="1">霞光河</option>
+            <option value="2">浅水河</option>
+            <option value="3">巨木河</option>
+            <option value="4">静河</option>
+            <option value="5">森林湖</option>
+            <option value="6">城郊湖</option>
+            <option value="7">草原湖</option>
+            <option value="9">鲸鱼海</option>
+            <option value="10">缓风海</option>
+            <option value="11">东海</option>
+            <option value="12">旧海</option>
+            <option value="13">海钓</option>
+            <option value="14">乐园</option>
+        </select>
+
+        <label for="weather">选择天气:</label>
+        <select id="weather">
+            <option value="1">晴天</option>
+            <option value="2">雨天</option>
+            <option value="3">彩虹</option>
+        </select>
+
+        <label for="time">输入钓鱼时间 (0-24):</label>
+        <input type="number" id="time" min="0" max="24" value="12">
+
+        <button onclick="fetchFish()">钓鱼</button>
+
+        <p id="simulationResult" style="display:none;"></p>
+
+        <div id="result">
+            <table id="fishTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>鱼名</th>
+                        <th>价格</th>
+                        <th>天气</th>
+                        <th>时间</th>
+                        <th>区域</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+            <p id="noResult" style="display:none;">当前条件下没有鱼可钓。</p>
+        </div>
+    </div>
+
+    <script>
+        // JSON 数据嵌入在代码中
+        const data = {
+            "areas": [
+                { "id": 1, "name": "霞光河" },
+                { "id": 2, "name": "浅水河" },
+                { "id": 3, "name": "巨木河" },
+                { "id": 4, "name": "静河" },
+                { "id": 5, "name": "森林湖" },
+                { "id": 6, "name": "城郊湖" },
+                { "id": 7, "name": "草原湖" },
+                { "id": 8, "name": "温泉山湖" },
+                { "id": 9, "name": "鲸鱼海" },
+                { "id": 10, "name": "缓风海" },
+                { "id": 11, "name": "东海" },
+                { "id": 12, "name": "旧海" },
+                { "id": 13, "name": "海钓" },
+                { "id": 14, "name": "乐园" }
+            ],
+            "times": [
+                { "id": 1, "range": "0-6" },
+                { "id": 2, "range": "0-12" },
+                { "id": 3, "range": "0-18" },
+                { "id": 4, "range": "0-24" },
+                { "id": 5, "range": "6-18" },
+                { "id": 6, "range": "6-24" },
+                { "id": 7, "range": "12-24" },
+                { "id": 8, "range": "18-24" }
+            ],
+            "weathers": [
+                { "id": 1, "type": "晴天" },
+                { "id": 2, "type": "雨天" },
+                { "id": 3, "type": "彩虹" }
+            ],
+            "fish": [
+                { "id": 1, "name": "斑金吉鲈", "price": 50, "area_ids": [1], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 2, "name": "真白鲑", "price": 105, "area_ids": [8], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 3, "name": "丁鳜", "price": 50, "area_ids": [5], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 4, "name": "欧洲水蛙", "price": 320, "area_ids": [5, 6, 7, 8], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 5, "name": "欧鲢", "price": 75, "area_ids": [5, 6, 7, 8], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 6, "name": "欧白鱼", "price": 50, "area_ids": [5, 6, 7, 8], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 7, "name": "罗非鱼", "price": 320, "area_ids": [1, 2, 3, 4], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 8, "name": "河鲈", "price": 75, "area_ids": [1, 2, 3, 4], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 9, "name": "青虾", "price": 50, "area_ids": [1, 2, 3, 4], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 10, "name": "鲣鱼", "price": 210, "area_ids": [9, 10, 11, 12, 13], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 11, "name": "海鲈鱼", "price": 75, "area_ids": [9, 10, 11, 12, 13], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 12, "name": "沙丁鱼", "price": 50, "area_ids": [9, 10, 11, 12, 13], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 13, "name": "鲃鱼", "price": 75, "area_ids": [2], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 14, "name": "花鳅", "price": 50, "area_ids": [3], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 15, "name": "竹夹鱼", "price": 50, "area_ids": [9], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 16, "name": "米诺鱼", "price": 50, "area_ids": [4], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 17, "name": "白带鱼", "price": 105, "area_ids": [10], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 18, "name": "海虾", "price": 50, "area_ids": [11], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 19, "name": "黑鲫", "price": 75, "area_ids": [6], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 20, "name": "拟白鱼", "price": 50, "area_ids": [6], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 21, "name": "刺豚鱼", "price": 100, "area_ids": [5], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 22, "name": "大西洋银鲛鱼", "price": 320, "area_ids": [9, 10, 11, 12, 13], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 23, "name": "海棘鱼", "price": 50, "area_ids": [12], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 24, "name": "石鳅", "price": 100, "area_ids": [6], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 25, "name": "胡瓜鱼", "price": 100, "area_ids": [7], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 26, "name": "纵带羊鱼", "price": 320, "area_ids": [13], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 27, "name": "梅花鲈", "price": 100, "area_ids": [8], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 28, "name": "蝌蚪", "price": 100, "area_ids": [8], "weather_ids": [3, 2], "time_ids": [4] },
+                { "id": 29, "name": "北欧鳌虾", "price": 100, "area_ids": [5], "weather_ids": [1, 2, 3], "time_ids": [1, 8] },
+                { "id": 30, "name": "白梭吻鲈", "price": 230, "area_ids": [3], "weather_ids": [3, 1], "time_ids": [4] },
+                { "id": 31, "name": "海马", "price": 100, "area_ids": [9], "weather_ids": [1, 2, 3], "time_ids": [3] },
+                { "id": 32, "name": "玫鲹", "price": 155, "area_ids": [10], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 33, "name": "贻贝", "price": 100, "area_ids": [6], "weather_ids": [3, 2], "time_ids": [4] },
+                { "id": 34, "name": "安康鱼", "price": 320, "area_ids": [13], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 35, "name": "欧洲鲤", "price": 230, "area_ids": [1], "weather_ids": [3, 1], "time_ids": [7] },
+                { "id": 36, "name": "大口黑鲈", "price": 230, "area_ids": [5], "weather_ids": [3, 1], "time_ids": [4] },
+                { "id": 37, "name": "真蛸", "price": 320, "area_ids": [9, 10, 11, 12, 13], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 38, "name": "大茭鲆", "price": 320, "area_ids": [9, 10, 11, 12, 13], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 39, "name": "欧洲鲽", "price": 230, "area_ids": [12], "weather_ids": [1, 2, 3], "time_ids": [1, 8] },
+                { "id": 40, "name": "大西洋鲑", "price": 155, "area_ids": [9], "weather_ids": [1, 2, 3], "time_ids": [1, 7] },
+                { "id": 41, "name": "江鳕", "price": 230, "area_ids": [4], "weather_ids": [1, 2, 3], "time_ids": [7] },
+                { "id": 42, "name": "大西洋侏儒章", "price": 150, "area_ids": [10], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 43, "name": "虾虎鱼", "price": 150, "area_ids": [11], "weather_ids": [1, 2, 3], "time_ids": [5] },
+                { "id": 44, "name": "溪蟹", "price": 100, "area_ids": [6], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 45, "name": "河鳚", "price": 150, "area_ids": [1], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 46, "name": "大西洋鲭", "price": 150, "area_ids": [9], "weather_ids": [3, 1], "time_ids": [7] },
+                { "id": 47, "name": "欧洲鳌龙虾", "price": 230, "area_ids": [10], "weather_ids": [1, 2, 3], "time_ids": [1, 8] },
+                { "id": 48, "name": "红眼鱼", "price": 150, "area_ids": [6], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 49, "name": "鳟鱼", "price": 230, "area_ids": [7], "weather_ids": [3, 1], "time_ids": [1, 8] },
+                { "id": 50, "name": "欧洲飞鱿", "price": 320, "area_ids": [13], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 51, "name": "大珍珠蚌", "price": 380, "area_ids": [5], "weather_ids": [3], "time_ids": [4] },
+                { "id": 52, "name": "河鲀", "price": 230, "area_ids": [12], "weather_ids": [1, 2, 3], "time_ids": [7] },
+                { "id": 53, "name": "大马哈鱼", "price": 150, "area_ids": [4], "weather_ids": [3], "time_ids": [4] },
+                { "id": 54, "name": "细鳞绿鳍鱼", "price": 380, "area_ids": [11], "weather_ids": [3], "time_ids": [4] },
+                { "id": 55, "name": "茴鱼", "price": 230, "area_ids": [6], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 56, "name": "猫鲨", "price": 535, "area_ids": [13], "weather_ids": [1, 2, 3], "time_ids": [4] },
+                { "id": 57, "name": "杜父鱼", "price": 150, "area_ids": [8], "weather_ids": [3, 2], "time_ids": [6] },
+                { "id": 58, "name": "三刺鱼", "price": 150, "area_ids": [2], "weather_ids": [3, 2], "time_ids": [4] },
+                { "id": 59, "name": "欧洲鳗鲡", "price": 380, "area_ids": [12], "weather_ids": [3], "time_ids": [6] },
+                { "id": 60, "name": "黑斑小鲷", "price": 230, "area_ids": [10], "weather_ids": [3, 2], "time_ids": [1, 8] },
+                { "id": 61, "name": "斑条鳞鱼", "price": 150, "area_ids": [6], "weather_ids": [3, 1], "time_ids": [1, 7] },
+                { "id": 62, "name": "皇带鱼", "price": 535, "area_ids": [13], "weather_ids": [1, 2, 3], "time_ids": [5] },
+                { "id": 63, "name": "蓝色北欧鳌虾", "price": 250, "area_ids": [5], "weather_ids": [1, 2, 3], "time_ids": [1, 8] },
+                { "id": 64, "name": "帝王蟹", "price": 535, "area_ids": [9], "weather_ids": [3], "time_ids": [6] },
+                { "id": 65, "name": "黑线鳕", "price": 230, "area_ids": [11], "weather_ids": [3, 1], "time_ids": [1, 7] },
+                { "id": 66, "name": "荫鱼", "price": 250, "area_ids": [6], "weather_ids": [3, 1], "time_ids": [2] },
+                { "id": 67, "name": "金鱼", "price": 250, "area_ids": [7], "weather_ids": [3, 2], "time_ids": [6] },
+                { "id": 68, "name": "黄金帝王蟹", "price": 850, "area_ids": [13], "weather_ids": [3], "time_ids": [4] },
+                { "id": 69, "name": "驼背太阳鱼", "price": 250, "area_ids": [8], "weather_ids": [3, 1], "time_ids": [6] },
+                { "id": 70, "name": "多瑙罗哲鱼", "price": 380, "area_ids": [3], "weather_ids": [3], "time_ids": [1, 7] },
+                { "id": 71, "name": "蓝鳍金枪鱼", "price": 850, "area_ids": [10], "weather_ids": [3], "time_ids": [5] },
+                { "id": 72, "name": "翻车鱼", "price": 850, "area_ids": [11], "weather_ids": [1, 2, 3], "time_ids": [2] },
+                { "id": 73, "name": "白斑狗鱼", "price": 610, "area_ids": [6], "weather_ids": [3, 2], "time_ids": [1, 8] },
+                { "id": 74, "name": "月鱼", "price": 850, "area_ids": [13], "weather_ids": [1, 2, 3], "time_ids": [1, 8] },
+                { "id": 75, "name": "蓝鳃太阳鱼", "price": 395, "area_ids": [8], "weather_ids": [3, 1], "time_ids": [1, 8] },
+                { "id": 76, "name": "北极红点鲑", "price": 610, "area_ids": [5], "weather_ids": [3, 2], "time_ids": [7] },
+                { "id": 77, "name": "锤头鲨", "price": 850, "area_ids": [12], "weather_ids": [3], "time_ids": [1, 8] },
+                { "id": 78, "name": "剑鱼", "price": 850, "area_ids": [9], "weather_ids": [3], "time_ids": [3] },
+                { "id": 79, "name": "欧洲鲶鱼", "price": 610, "area_ids": [7], "weather_ids": [3, 1], "time_ids": [1, 8] },
+                { "id": 80, "name": "尖吻鲭鲨", "price": 850, "area_ids": [13], "weather_ids": [3], "time_ids": [5] }
+            ],
+            "fishing_levels": [
+                { "level": 1, "fish_ids": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] },
+                { "level": 2, "fish_ids": [21, 22, 23, 24, 25, 26] },
+                { "level": 3, "fish_ids": [27, 28, 29, 30, 31, 32, 33, 34] },
+                { "level": 4, "fish_ids": [35, 36, 37, 38, 39, 40, 41, 42, 43, 44] },
+                { "level": 5, "fish_ids": [45, 46, 47, 48, 49, 50] },
+                { "level": 6, "fish_ids": [51, 52, 53, 54, 55, 56] },
+                { "level": 7, "fish_ids": [57, 58, 59, 60, 61, 62] },
+                { "level": 8, "fish_ids": [63, 64, 65, 66, 67, 68] },
+                { "level": 9, "fish_ids": [69, 70, 71, 72, 73, 74] },
+                { "level": 10, "fish_ids": [75, 76, 77, 78, 79, 80] }
+            ]
+        };
+
+        // 获取区域名称的映射
+        function getAreaMap(areas) {
+            return areas.reduce((map, area) => {
+                map[area.id] = area.name;
+                return map;
+            }, {});
+        }
+        // 获取天气名称的映射
+        function getWeatherMap(weathers) {
+            return weathers.reduce((map, weather) => {
+                map[weather.id] = weather.type;
+                return map;
+            }, {});
+        }
+        // 获取时间名称的映射
+        function getTimeMap(times) {
+            return times.reduce((map, time) => {
+                map[time.id] = time.range;
+                return map;
+            }, {});
+        }
+
+        // 根据等级、区域、天气和时间获取可钓鱼
+        function getFishByLevelAreaWeatherAndTime(fishData, fishingLevels, level, areaId, weatherId, inputTime) {
+            const areaMap = getAreaMap(fishData.areas);
+            const weatherMap = getWeatherMap(fishData.weathers);
+            const timeMap = getTimeMap(fishData.times);
+
+            // 获取小于或等于当前等级的所有鱼种
+            const availableFishIds = fishingLevels
+                .filter(entry => entry.level <= level)
+                .reduce((ids, entry) => ids.concat(entry.fish_ids), []);
+
+            // 筛选符合条件的鱼类
+            return fishData.fish.filter(fish =>
+                // 根据等级筛选（包含低等级的鱼）
+                availableFishIds.includes(fish.id) &&
+                // 根据区域筛选
+                fish.area_ids.includes(areaId) &&
+                // 根据天气筛选
+                fish.weather_ids.includes(weatherId) &&
+                // 根据时间筛选，鱼可能在多个时间段内出现
+                fish.time_ids.some(timeId => isTimeInRange(inputTime, fishData.times.find(time => time.id === timeId).range))
+            ).map(fish => ({
+                name: fish.name,
+                price: fish.price,
+                weathers: fish.weather_ids.map(id => weatherMap[id]).join(', '),
+                times: fish.time_ids.map(id => timeMap[id]).join(', '),
+                areas: fish.area_ids.map(id => areaMap[id]).join(', ')
+            }));
+        }
+
+        // 判断输入时间是否在时间范围内
+        function isTimeInRange(inputTime, timeRange) {
+            const [start, end] = timeRange.split('-').map(Number);
+            if (start <= end) {
+                return inputTime >= start && inputTime < end;
+            } else {
+                return inputTime >= start || inputTime < end;
+            }
+        }
+
+
+        // 获取用户选择的等级、区域、天气和时间
+        function fetchFish() {
+            const level = parseInt(document.getElementById('level').value);
+            const areaId = parseInt(document.getElementById('area').value);
+            const weatherId = parseInt(document.getElementById('weather').value);
+            const inputTime = parseInt(document.getElementById('time').value);
+
+            const fish = getFishByLevelAreaWeatherAndTime(data, data.fishing_levels, level, areaId, weatherId, inputTime);
+            console.log(fish);
+            const table = document.getElementById('fishTable');
+            const noResult = document.getElementById('noResult');
+            const tbody = table.querySelector('tbody');
+            tbody.innerHTML = '';
+
+            if (fish.length > 0) {
+                table.style.display = 'table';
+                noResult.style.display = 'none';
+
+                fish.forEach(f => {
+                    const row = `<tr>
+                        <td>${f.name}</td>
+                        <td>${f.price}</td>
+                        <td>${f.weathers}</td>
+                        <td>${f.times}</td>
+                        <td>${f.areas}</td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+
+                // 模拟钓鱼 100 次并展示结果
+                const averageValue = simulateFishing(fish);
+                const simulationResult = document.getElementById('simulationResult');
+                simulationResult.style.display = 'block';
+                simulationResult.textContent = `10000次钓鱼的平均收益为: ${averageValue}`;
+            } else {
+                table.style.display = 'none';
+                noResult.style.display = 'block';
+                document.getElementById('simulationResult').style.display = 'none';
+            }
+        }
+
+        // 模拟钓鱼 100 次并计算平均值
+        function simulateFishing(fishData) {
+            const fishList = fishData;
+            if (fishList.length === 0) return 0;
+            const getRandomFish = () => fishList[Math.floor(Math.random() * fishList.length)];
+
+            const getRandomMultiplier = () => {
+                const rand = Math.random();
+                if (rand < 0.5) return 1;
+                if (rand < 0.85) return 1.5;
+                return 2;
+            };
+
+            let totalValue = 0;
+            let iterations = 10000;
+            for (let i = 0; i < iterations; i++) {
+                const fish = getRandomFish();
+                const multiplier = getRandomMultiplier();
+                totalValue += fish.price * multiplier;
+                //console.log(`第 ${i + 1} 次钓鱼 ${fish.name} 获得 ${multiplier} 倍，价值 ${fish.price * multiplier} 元，累计收益 ${totalValue} 元`);
+            }
+
+            return totalValue / iterations;
+        }
+    </script>
+</body>
+
+</html>
