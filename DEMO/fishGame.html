@@ -16,12 +16,19 @@
             margin: 0 auto;
         }
 
+        section {
+            display: flex;
+            flex: auto;
+        }
+
         label,
         input,
         select,
         button {
             margin: 10px 0;
-            display: block;
+            width: 150px;
+            height: 30px;
+            line-height: 30px;
         }
 
         table {
@@ -55,56 +62,60 @@
 <body>
     <div class="container">
         <h1>钓鱼游戏</h1>
+        <section>
+            <label for="level">选择钓鱼等级:</label>
+            <select id="level">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+            </select>
+        </section>
 
-        <label for="level">选择钓鱼等级:</label>
-        <select id="level">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            <option value="10">10</option>
-        </select>
+        <section><label for="area">选择区域:</label>
+            <select id="area">
+                <option value="1">霞光河</option>
+                <option value="2">浅水河</option>
+                <option value="3">巨木河</option>
+                <option value="4">静河</option>
+                <option value="5">森林湖</option>
+                <option value="6">城郊湖</option>
+                <option value="7">草原湖</option>
+                <option value="8">温泉山湖</option>
+                <option value="9">鲸鱼海</option>
+                <option value="10">缓风海</option>
+                <option value="11">东海</option>
+                <option value="12">旧海</option>
+                <option value="13">海钓</option>
+                <option value="14">乐园</option>
+            </select>
+        </section>
 
-        <label for="area">选择区域:</label>
-        <select id="area">
-            <option value="1">霞光河</option>
-            <option value="2">浅水河</option>
-            <option value="3">巨木河</option>
-            <option value="4">静河</option>
-            <option value="5">森林湖</option>
-            <option value="6">城郊湖</option>
-            <option value="7">草原湖</option>
-            <option value="9">鲸鱼海</option>
-            <option value="10">缓风海</option>
-            <option value="11">东海</option>
-            <option value="12">旧海</option>
-            <option value="13">海钓</option>
-            <option value="14">乐园</option>
-        </select>
+        <section><label for="weather">选择天气:</label>
+            <select id="weather">
+                <option value="1">晴天</option>
+                <option value="2">雨天</option>
+                <option value="3">彩虹</option>
+            </select>
+        </section>
 
-        <label for="weather">选择天气:</label>
-        <select id="weather">
-            <option value="1">晴天</option>
-            <option value="2">雨天</option>
-            <option value="3">彩虹</option>
-        </select>
-
-        <label for="time">输入钓鱼时间 (0-24):</label>
-        <input type="number" id="time" min="0" max="24" value="12">
-
-        <button onclick="fetchFish()">钓鱼</button>
-
-        <p id="simulationResult" style="display:none;"></p>
+        <section><label for="time">输入钓鱼时间 (0-24):</label>
+            <input type="text" id="time">
+        </section>
+        <section><button onclick="fetchFish()">钓鱼</button></section>
+        <ul id="fruits-list"></ul>
 
         <div id="result">
             <table id="fishTable" style="display:none;">
                 <thead>
                     <tr>
+                        <th>编号</th>
                         <th>鱼名</th>
                         <th>价格</th>
                         <th>天气</th>
@@ -271,6 +282,52 @@
             }, {});
         }
 
+        //遍历所有的鱼儿
+        function getAllFish(fishData) {
+            const areaMap = getAreaMap(fishData.areas);
+            const weatherMap = getWeatherMap(fishData.weathers);
+            const timeMap = getTimeMap(fishData.times);
+            const fishList = fishData.fish.map(fish => ({
+                id: fish.id,
+                name: fish.name,
+                price: fish.price,
+                weathers: fish.weather_ids.map(id => weatherMap[id]).join(', '),
+                times: fish.time_ids.map(id => timeMap[id]).join(', '),
+                areas: fish.area_ids.map(id => areaMap[id]).join(', ')
+            }));
+            return fishList;
+        }
+
+        // 自动生成所有的鱼儿列表
+        function tableInit() {
+            const fishList = getAllFish(data);
+            const table = document.getElementById('fishTable');
+            const noResult = document.getElementById('noResult');
+            const tbody = table.querySelector('tbody');
+            tbody.innerHTML = '';
+
+            if (fishList.length > 0) {
+                table.style.display = 'table';
+                noResult.style.display = 'none';
+
+                fishList.forEach((f, index) => {
+                    const row = `<tr>
+                        <td>${index + 1}</td>
+                        <td>${f.name}</td>
+                        <td>${f.price}</td>
+                        <td>${f.weathers}</td>
+                        <td>${f.times}</td>
+                        <td>${f.areas}</td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+            } else {
+                table.style.display = 'none';
+                noResult.style.display = 'block';
+            }
+        }
+        tableInit();
+
         // 根据等级、区域、天气和时间获取可钓鱼
         function getFishByLevelAreaWeatherAndTime(fishData, fishingLevels, level, areaId, weatherId, inputTime) {
             const areaMap = getAreaMap(fishData.areas);
@@ -317,40 +374,88 @@
             const level = parseInt(document.getElementById('level').value);
             const areaId = parseInt(document.getElementById('area').value);
             const weatherId = parseInt(document.getElementById('weather').value);
-            const inputTime = parseInt(document.getElementById('time').value);
+            const inputTime = document.getElementById('time').value;
 
-            const fish = getFishByLevelAreaWeatherAndTime(data, data.fishing_levels, level, areaId, weatherId, inputTime);
-            console.log(fish);
-            const table = document.getElementById('fishTable');
-            const noResult = document.getElementById('noResult');
-            const tbody = table.querySelector('tbody');
-            tbody.innerHTML = '';
+            //定义分割符
+            let separator = ",";
+            // 判断字符串是否包含分隔符
+            if (inputTime.includes(separator)) {
+                // 如果包含分隔符，进行分割
+                const timesArray = inputTime.split(',');
+                let fruitsList = document.getElementById("fruits-list");
+                fruitsList.innerHTML = "";
+                for (let i = 0; i < timesArray.length; i++) {
+                    if (timesArray[i]>24 || timesArray[i]<0) {
+                        alert("时间范围错误，请输入正确的时间范围");
+                        return;e
+                    }
+                    const fish = getFishByLevelAreaWeatherAndTime(data, data.fishing_levels, level, areaId, weatherId, timesArray[i]);
+                    console.log(fish);
+                    const table = document.getElementById('fishTable');
+                    const noResult = document.getElementById('noResult');
+                    const tbody = table.querySelector('tbody');
+                    //tbody.innerHTML = '';
+                    // 模拟钓鱼 100 次并展示结果
 
-            if (fish.length > 0) {
-                table.style.display = 'table';
-                noResult.style.display = 'none';
-
-                fish.forEach(f => {
-                    const row = `<tr>
-                        <td>${f.name}</td>
-                        <td>${f.price}</td>
-                        <td>${f.weathers}</td>
-                        <td>${f.times}</td>
-                        <td>${f.areas}</td>
-                    </tr>`;
-                    tbody.innerHTML += row;
-                });
-
-                // 模拟钓鱼 100 次并展示结果
-                const averageValue = simulateFishing(fish);
-                const simulationResult = document.getElementById('simulationResult');
-                simulationResult.style.display = 'block';
-                simulationResult.textContent = `10000次钓鱼的平均收益为: ${averageValue}`;
+                    const averageValue = simulateFishing(fish);
+                    const simulationResult = document.getElementById('simulationResult');
+                    let listItem = document.createElement("li");
+                    listItem.textContent = `10000次钓鱼的平均收益为: ${averageValue}`;
+                    fruitsList.appendChild(listItem);
+                    //simulationResult.style.display = 'block';
+                    //simulationResult.textContent = `10000次钓鱼的平均收益为: ${averageValue}`;
+                }
             } else {
-                table.style.display = 'none';
-                noResult.style.display = 'block';
-                document.getElementById('simulationResult').style.display = 'none';
+                // 如果不包含分隔符，输出提示或其他处理方式
+                if (inputTime>24 || inputTime<0) {
+                    alert("时间范围错误，请输入正确的时间范围");
+                }
+                let fruitsList = document.getElementById("fruits-list");
+                    const fish = getFishByLevelAreaWeatherAndTime(data, data.fishing_levels, level, areaId, weatherId, inputTime);
+                    console.log(fish);
+                    const table = document.getElementById('fishTable');
+                    const noResult = document.getElementById('noResult');
+                    const tbody = table.querySelector('tbody');
+                    //tbody.innerHTML = '';
+                    // 模拟钓鱼 100 次并展示结果
+
+                    const averageValue = simulateFishing(fish);
+                    const simulationResult = document.getElementById('simulationResult');
+                    let listItem = document.createElement("li");
+                    listItem.textContent = `10000次钓鱼的平均收益为: ${averageValue}`;
+                    fruitsList.innerHTML = "";
+                    fruitsList.appendChild(listItem);
+                    //simulationResult.style.display = 'block';
+                    //simulationResult.textContent = `10000次钓鱼的平均收益为: ${averageValue}`;
+
             }
+
+            //const table = document.getElementById('fishTable');
+            //const noResult = document.getElementById('noResult');
+            //const tbody = table.querySelector('tbody');
+            //tbody.innerHTML = '';
+
+            // if (fish.length > 0) {
+            //     table.style.display = 'table';
+            //     noResult.style.display = 'none';
+
+            //     fish.forEach((f, index) => {
+            //         const row = `<tr>
+            //             <td>${index + 1}</td>
+            //             <td>${f.name}</td>
+            //             <td>${f.price}</td>
+            //             <td>${f.weathers}</td>
+            //             <td>${f.times}</td>
+            //             <td>${f.areas}</td>
+            //         </tr>`;
+            //         tbody.innerHTML += row;
+            //     });
+
+            // } else {
+            //     table.style.display = 'none';
+            //     noResult.style.display = 'block';
+            //     document.getElementById('simulationResult').style.display = 'none';
+            // }
         }
 
         // 模拟钓鱼 100 次并计算平均值
