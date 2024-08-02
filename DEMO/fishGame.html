@@ -110,6 +110,32 @@
         </section>
         <section><button onclick="fetchFish()">钓鱼</button></section>
         <ul id="fruits-list"></ul>
+        <div id="result">
+            <table id="dataTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>等级</th>
+                        <th>天气</th>
+                        <th>时间</th>
+                        <th>海钓</th>
+                        <th>鲸鱼海</th>
+                        <th>缓风海</th>
+                        <th>东海</th>
+                        <th>旧海</th>
+                        <th>霞光河</th>
+                        <th>浅水河</th>
+                        <th>巨木河</th>
+                        <th>静河</th>
+                        <th>森林湖</th>
+                        <th>城郊湖</th>
+                        <th>草原湖</th>
+                        <th>温泉山湖</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
 
         <div id="result">
             <table id="fishTable" style="display:none;">
@@ -376,60 +402,92 @@
             const weatherId = parseInt(document.getElementById('weather').value);
             const inputTime = document.getElementById('time').value;
 
-            //定义分割符
-            let separator = ",";
-            // 判断字符串是否包含分隔符
-            if (inputTime.includes(separator)) {
-                // 如果包含分隔符，进行分割
-                const timesArray = inputTime.split(',');
+            // 判断输入时间是否为空
+            if (inputTime == "") {
+                alert("请输入时间范围");
+            } else {
+                //定义时间输入数组
+                let timesArray = [];
+                //定义分割符
+                let separatorRegex = /,|，/;
+                console.log(inputTime);
+                if (inputTime.includes(",") || inputTime.includes("，")) {
+                    // 如果包含分隔符，进行分割并写入数组
+                    timesArray = inputTime.split(separatorRegex);
+                } else {
+                    // 如果不包含分隔符，输出提示或其他处理方式
+                    if (inputTime > 24 || inputTime < 0) {
+                        alert("时间范围错误，请输入正确的时间范围");
+                    } else {
+                        timesArray.push(inputTime);
+                    }
+                }
+                // 清空原有列表
                 let fruitsList = document.getElementById("fruits-list");
                 fruitsList.innerHTML = "";
+                const table = document.getElementById('dataTable');
+                const noResult = document.getElementById('noResult');
+                const tbody = table.querySelector('tbody');
+                console.log(tbody);
+                tbody.innerHTML = '';
+                console.log(timesArray);
+                // 遍历时间数组，获取鱼类
                 for (let i = 0; i < timesArray.length; i++) {
-                    if (timesArray[i]>24 || timesArray[i]<0) {
-                        alert("时间范围错误，请输入正确的时间范围");
-                        return;e
+                    //定义统计结果数组
+                    let resultArray = [];
+                    //遍历区域数组，获取鱼类
+                    console.log("时间", timesArray[i]);
+                    const areaArray = ["霞光河", "浅水河", "巨木河", "静河", "森林湖", "城郊湖", "草原湖", "温泉山湖", "鲸鱼海", "缓风海", "东海", "旧海", "海钓"]
+                    for (let j = 0; j < areaArray.length; j++) {
+                        let areaID = j + 1;
+                        const fish = getFishByLevelAreaWeatherAndTime(data, data.fishing_levels, level, areaID, weatherId, timesArray[i]);
+                        const averageValue = simulateFishing(fish);
+                        //将结果打印在列表中
+                        // let listItem = document.createElement("li");
+                        // listItem.textContent = `100000次钓鱼期望为: ${averageValue}---${timesArray[i]}点：${areaArray[j]}`;
+                        // fruitsList.appendChild(listItem);
+
+                        //将结果添加在数组中
+                        resultArray.push(averageValue)
+
+                        //数组重组
+                        // let part1 = resultArray.slice(-1);
+                        // let part2 = resultArray.slice(-5, -1);
+                        // let part3 = resultArray.slice(0, -5);
+                        // //重新组合
+                        // let newResultArray = part1.concat(part2, part3);
                     }
-                    const fish = getFishByLevelAreaWeatherAndTime(data, data.fishing_levels, level, areaId, weatherId, timesArray[i]);
-                    console.log(fish);
-                    const table = document.getElementById('fishTable');
-                    const noResult = document.getElementById('noResult');
-                    const tbody = table.querySelector('tbody');
-                    //tbody.innerHTML = '';
-                    // 模拟钓鱼 100 次并展示结果
+                    console.log(resultArray);
+                    //绘制表格
+                    if (resultArray.length > 0) {
+                        table.style.display = 'table';
+                        noResult.style.display = 'none';
 
-                    const averageValue = simulateFishing(fish);
-                    const simulationResult = document.getElementById('simulationResult');
-                    let listItem = document.createElement("li");
-                    listItem.textContent = `10000次钓鱼的平均收益为: ${averageValue}`;
-                    fruitsList.appendChild(listItem);
-                    //simulationResult.style.display = 'block';
-                    //simulationResult.textContent = `10000次钓鱼的平均收益为: ${averageValue}`;
+                        const row = `<tr>
+                        <td>${level}</td>
+                        <td>${weatherId}</td>
+                        <td>${timesArray[i]}</td>
+                        <td>${resultArray[12]}</td>
+                        <td>${resultArray[8]}</td>
+                        <td>${resultArray[9]}</td>
+                        <td>${resultArray[10]}</td>
+                        <td>${resultArray[11]}</td>
+                        <td>${resultArray[0]}</td>
+                        <td>${resultArray[1]}</td>
+                        <td>${resultArray[2]}</td>
+                        <td>${resultArray[3]}</td>
+                        <td>${resultArray[4]}</td>
+                        <td>${resultArray[5]}</td>
+                        <td>${resultArray[6]}</td>
+                        <td>${resultArray[7]}</td>
+                        </tr>`;
+                        tbody.innerHTML += row;
+                    };
+
                 }
-            } else {
-                // 如果不包含分隔符，输出提示或其他处理方式
-                if (inputTime>24 || inputTime<0) {
-                    alert("时间范围错误，请输入正确的时间范围");
-                }
-                let fruitsList = document.getElementById("fruits-list");
-                    const fish = getFishByLevelAreaWeatherAndTime(data, data.fishing_levels, level, areaId, weatherId, inputTime);
-                    console.log(fish);
-                    const table = document.getElementById('fishTable');
-                    const noResult = document.getElementById('noResult');
-                    const tbody = table.querySelector('tbody');
-                    //tbody.innerHTML = '';
-                    // 模拟钓鱼 100 次并展示结果
-
-                    const averageValue = simulateFishing(fish);
-                    const simulationResult = document.getElementById('simulationResult');
-                    let listItem = document.createElement("li");
-                    listItem.textContent = `10000次钓鱼的平均收益为: ${averageValue}`;
-                    fruitsList.innerHTML = "";
-                    fruitsList.appendChild(listItem);
-                    //simulationResult.style.display = 'block';
-                    //simulationResult.textContent = `10000次钓鱼的平均收益为: ${averageValue}`;
-
             }
-
+        
+            //重写表格
             //const table = document.getElementById('fishTable');
             //const noResult = document.getElementById('noResult');
             //const tbody = table.querySelector('tbody');
@@ -464,15 +522,32 @@
             if (fishList.length === 0) return 0;
             const getRandomFish = () => fishList[Math.floor(Math.random() * fishList.length)];
 
+            //概率算法1
+            // const getRandomMultiplier = () => {
+            //     const rand = Math.random();
+            //     if (rand < 0.5) return 1;
+            //     if (rand < 0.85) return 1.5;
+            //     return 2;
+            // };
+
+            //概率算法2
             const getRandomMultiplier = () => {
-                const rand = Math.random();
-                if (rand < 0.5) return 1;
-                if (rand < 0.85) return 1.5;
-                return 2;
-            };
+                const randomNum = Math.random() * 100; // 生成一个0到100之间的随机数
+                if (randomNum < 30) {
+                    return 1; // 30% 的概率
+                } else if (randomNum < 30 + 50) {
+                    return 1.5; // 50% 的概率
+                } else if (randomNum < 30 + 50 + 15) {
+                    return 2; // 15% 的概率
+                } else if (randomNum < 30 + 50 + 15 + 4) {
+                    return 4; // 4% 的概率
+                } else {
+                    return 8; // 1% 的概率
+                }
+            }
 
             let totalValue = 0;
-            let iterations = 10000;
+            let iterations = 200000;
             for (let i = 0; i < iterations; i++) {
                 const fish = getRandomFish();
                 const multiplier = getRandomMultiplier();
@@ -480,7 +555,7 @@
                 //console.log(`第 ${i + 1} 次钓鱼 ${fish.name} 获得 ${multiplier} 倍，价值 ${fish.price * multiplier} 元，累计收益 ${totalValue} 元`);
             }
 
-            return totalValue / iterations;
+            return Math.round(totalValue / iterations);
         }
     </script>
 </body>
