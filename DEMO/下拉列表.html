@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自定义多选下拉列表</title>
+    <style>
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            width: 200px;
+        }
+
+        .dropdown-select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+
+        .dropdown-options {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+            z-index: 1;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .dropdown-options label {
+            display: block;
+            padding: 8px;
+            cursor: pointer;
+            background: #fff;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .dropdown-options label:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dropdown">
+    <div class="dropdown-select" onclick="toggleDropdown()">选择多个选项</div>
+    <div class="dropdown-options">
+        <label><input type="checkbox" value="option1" onchange="updateSelection()"> 选项1</label>
+        <label><input type="checkbox" value="option2" onchange="updateSelection()"> 选项2</label>
+        <label><input type="checkbox" value="option3" onchange="updateSelection()"> 选项3</label>
+        <label><input type="checkbox" value="option4" onchange="updateSelection()"> 选项4</label>
+        <label><input type="checkbox" value="option5" onchange="updateSelection()"> 选项5</label>
+    </div>
+</div>
+
+<script>
+    // 点击下拉菜单显示/隐藏下拉选项
+    function toggleDropdown() {
+        const options = document.querySelector('.dropdown-options');
+        options.style.display = options.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // 更新选中选项
+    function updateSelection() {
+        const checkboxes = document.querySelectorAll('.dropdown-options input[type="checkbox"]');
+        const selected = [];
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                selected.push(checkbox.parentNode.textContent.trim());
+            }
+        });
+        console.log(selected);
+    }
+
+    // 点击外部关闭下拉菜单
+    document.addEventListener('click', function(event) {
+        const dropdown = document.querySelector('.dropdown');
+        if (!dropdown.contains(event.target)) {
+            document.querySelector('.dropdown-options').style.display = 'none';
+        }
+    });
+    
+</script>
+
+</body>
+</html>
